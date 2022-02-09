@@ -2,96 +2,221 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.TimerTask;
 
-public class Main extends JFrame {
-        static LocalTime counter = LocalTime.now() ;
-        JFrame frame = new JFrame("Timer App-Miralem Sljivo");
-        static Timer timer;
-        JButton start = new JButton("Start");
-        JButton colorButton = new JButton("Choose Color");
-        JButton stop1 = new JButton("Stop");
-        JLabel l2 = new JLabel("Local time :");
-        JButton restart = new JButton("Restart");
+public class Main implements ActionListener {
+    private NextGui nextGui;
+    private Timer colorSwitchTimer;
+    private Color selectedColor;
+    private Color previousColor;
 
- Main(){
-     start.addActionListener(new ActionListener() {
-                                 @Override
-                                 public void actionPerformed(ActionEvent e) {
-                                     timer = new Timer(1000, new ActionListener() {
-                                         @Override
-                                         public void actionPerformed(ActionEvent e) {
+    JFrame f = new JFrame("Timer App");
+    JLabel label = new JLabel("Selected Color!");
+    JLabel label1 = new JLabel("Speed: ");
 
-                                             l2.setText("Counter = " + LocalTime.now());
-
-                                         }
-
-                                     });
-                                     timer.start();
-                                 }
-                             });
+    JRadioButton onTime = new JRadioButton("On Time: ");
+    JRadioButton countDow = new JRadioButton("Countdown (sec): ");
+    TextField t1 = new TextField();
+    TextField t3 = new TextField();
+    Button b1 = new Button("Choose color:");
+    JComboBox jcb = new JComboBox();
+    Button b2 = new Button("Start Countdown");
+    Button b3 = new Button("Stop");
 
 
-             colorButton.addActionListener(new ActionListener() {
-                 @Override
-                 public void actionPerformed(ActionEvent e) {
-                     Color backgorundColor = JColorChooser.showDialog(null, "Choose color", Color.blue);
+    Main() {
 
-                     if (backgorundColor !=null){
-                         l2.setForeground(backgorundColor);
-                     }
-                 }
-             });
 
-             stop1.addActionListener(new ActionListener() {
-                 @Override
-                 public void actionPerformed(ActionEvent e) {
-                     timer.stop();
-                 }
-             });
+        jcb.addItem(1);
+        jcb.addItem(2);
+        jcb.addItem(3);
+        jcb.addItem(4);
 
-     restart.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (timer.isRunning()) {
-                timer.stop();
+        f.getContentPane().setBackground(Color.orange);
+        onTime.setBounds(20, 10, 150, 20);
+        onTime.setBackground(Color.WHITE);
+        countDow.setBounds(20, 40, 150, 20);
+        countDow.setBackground(Color.WHITE);
+        t1.setBounds(220, 10, 180, 20);
+        t3.setBounds(220, 40, 180, 20);
+        b1.setBounds(20, 100, 150, 40);
+        b1.setBackground(Color.WHITE);
+        label.setBounds(220, 105, 150, 30);
+        label.setBackground(null);
+        jcb.setBounds(110, 160, 60, 20);
+        label1.setBounds(30, 160, 100, 20);
+        b2.setBounds(20, 230, 150, 40);
+        b2.setBackground(Color.WHITE);
+        b3.setBounds(220, 230, 150, 40);
+        b3.setBackground(Color.WHITE);
+
+
+        f.add(onTime);
+        f.add(countDow);
+        f.add(t1);
+        f.add(t3);
+        f.add(b1);
+        f.add(label);
+        f.add(jcb);
+        f.add(label1);
+        f.add(b2);
+        f.add(b3);
+        f.setLayout(null);
+        f.setVisible(true);
+        f.setSize(450, 350);
+        f.setLocation(450, 150);
+
+        b1.addActionListener(this);
+        b2.addActionListener(e -> {
+            if (onTime.isSelected()) {
+                String dateString = t1.getText();
+
+
+                String[] timeArray = dateString.split(":");
+                LocalDate localDate = LocalDate.now();
+                LocalDateTime localDateTime = localDate.atTime(LocalTime.of(Integer.parseInt(timeArray[0]), Integer.parseInt(timeArray[1])));
+                Date onTime = java.sql.Timestamp.valueOf(localDateTime);
+
+                TimerTask task = new TimerTask() {
+                    public void run() {
+                        openNextGui();
+                    }
+                };
+                java.util.Timer timer = new java.util.Timer();
+                timer.schedule(task, onTime);
+
+
+            } else if (countDow.isSelected()) {
+                Integer delay = Integer.parseInt(t3.getText().toString());
+                TimerTask task = new TimerTask() {
+                    public void run() {
+                        openNextGui();
+                    }
+                };
+                java.util.Timer timer = new java.util.Timer();
+                timer.schedule(task, delay * 1000);
             }
-                l2.setText("Locar= " + counter);
 
-         }
-     });
+        });
+        b3.addActionListener(e -> {
+            nextGui.setVisible(false);
+            nextGui.dispose();
+        });
 
-     start.setBounds(20, 100, 130, 40);
-     stop1.setBounds(230, 100, 130, 40);
-     l2.setBounds(120, 30, 150, 100);
-     colorButton.setBounds(230, 150, 130, 40);
-     restart.setBounds(20, 150, 130, 40);
-     frame.add(start);
-     frame.add(restart);
-     frame.add(l2);
-     frame.add(stop1);
-     frame.add(colorButton);
-     frame.setLayout(null);
-     frame.setVisible(true);
-     frame.setSize(450, 350);
-     frame.setLocation(450, 150);
-     frame.setDefaultCloseOperation(frame.EXIT_ON_CLOSE);
+        onTime.addActionListener(e -> {
+            countDow.setSelected(false);
+        });
 
- }
+        countDow.addActionListener(e -> {
+            onTime.setSelected(false);
+        });
+
+
+        f.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                int rez = JOptionPane.showConfirmDialog(f,
+                        "Da li stvarno zelite napustiti program ?", "Potvrdite izlaz: ",
+                        JOptionPane.YES_NO_OPTION);
+                if (rez == JOptionPane.YES_OPTION)
+                    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+                else if (rez == JOptionPane.NO_OPTION)
+                    f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            }
+        });
+    }
+
 
     public static void main(String[] args) {
-        JFrame f = new JFrame("Welcome to Timer app ");
 
-        Object[] options = {"Settings", "Close"};
-        int o = JOptionPane.showOptionDialog(f, "Choose option: ", "Welcome to Timer app",
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-        if (o == JOptionPane.YES_OPTION){
+
+        JFrame frame = new JFrame("Timer App");
+        Object[] options = {"Settings",
+                "Close"};
+        int p = JOptionPane.showOptionDialog(frame,
+                "Choose option:",
+                "Welcome to Timer Application",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (p == JOptionPane.YES_OPTION)
             new Main();
-        }
-        if (o == JOptionPane.NO_OPTION){
+
+        else if (p == JOptionPane.NO_OPTION)
             System.exit(0);
+
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == b1) {
+            selectedColor = JColorChooser.showDialog(null, "Pick a color", label.getForeground());
+            if (selectedColor != null)
+                label.setForeground(selectedColor);
+        }
+    }
+
+
+    private void openNextGui() {
+        var ref = new Object() {
+            Color previousColor = selectedColor;
+        };
+        if (nextGui != null) {
+            colorSwitchTimer.stop();
+            nextGui.setVisible(false);
+            nextGui.dispose();
+        }
+        nextGui = new NextGui();
+        nextGui.setBackground(selectedColor);
+        int delay = Integer.parseInt(jcb.getSelectedItem().toString());
+        colorSwitchTimer = new Timer(delay * 1000, e1 -> {
+            if (ref.previousColor == selectedColor){
+                nextGui.setBackground(Color.CYAN);
+            } else nextGui.setBackground(selectedColor);
+                ref.previousColor = ref.previousColor == selectedColor ? Color.CYAN : selectedColor;
+            });
+        if (jcb.getSelectedItem().equals(1)) {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+            }
+            if (jcb.getSelectedItem().equals(2)) {
+                try {
+                    selectedColor.wait(1200);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+                if (jcb.getSelectedItem().equals(3)) {
+                    try {
+                        selectedColor.wait(800);
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
+                    }
+                    if (jcb.getSelectedItem().equals(4)) {
+                        try {
+                            selectedColor.wait(400);
+                        } catch (InterruptedException interruptedException) {
+                            interruptedException.printStackTrace();
+                        }
+                        colorSwitchTimer.start();
+                    }
+                }
+            }
         }
     }
 }
+
+
+
